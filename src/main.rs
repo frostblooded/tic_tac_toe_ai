@@ -29,14 +29,20 @@ impl Board {
         self.data[x][y] = Some(State::Enemy);
     }
 
-    fn generate_children(&self) -> Vec<(Board, usize, usize)> {
+    fn generate_children(&self, maximize: bool) -> Vec<(Board, usize, usize)> {
         let mut res = vec![];
 
         for i in 0..Board::BOARD_SIZE {
             for j in 0..Board::BOARD_SIZE {
                 if self.data[i][j].is_none() {
                     let mut cloned_board = self.clone();
-                    cloned_board.set_enemy(i, j);
+
+                    if maximize {
+                        cloned_board.set_player(i, j);
+                    } else {
+                        cloned_board.set_enemy(i, j);
+                    }
+
                     res.push((cloned_board, i, j));
                 }
             }
@@ -124,7 +130,7 @@ impl Board {
     }
 
     fn move_enemy_helper(&self, maximize: bool, depth: usize) -> (i32, Option<(usize, usize)>) {
-        let children = self.generate_children();
+        let children = self.generate_children(maximize);
 
         if children.len() == 0 {
             let value = self.get_value();
