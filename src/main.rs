@@ -193,7 +193,6 @@ impl Board {
                 -(Board::MAX_SOLUTION_DEPTH as i32 - depth as i32)
             };
 
-            //println!("Returning value {}", used_value);
             return (used_value, None);
         }
 
@@ -201,11 +200,6 @@ impl Board {
         let mut best_move = None;
 
         for (child_board, x, y) in children {
-            //println!(
-            //"Depth {}, alpha {:?}, beta {:?}: Entering {:?} after placement of ({}, {})",
-            //depth, alpha, beta, child_board, x, y
-            //);
-
             let (value, _) = child_board.move_enemy_helper(!maximize, depth + 1, alpha, beta);
 
             if best_value.is_none() {
@@ -225,7 +219,6 @@ impl Board {
 
             if maximize {
                 if beta.is_some() && best_value.unwrap() >= beta.unwrap() {
-                    //println!("Returning because child is higher than beta");
                     return (best_value.unwrap(), best_move);
                 }
 
@@ -236,7 +229,6 @@ impl Board {
                 }
             } else {
                 if alpha.is_some() && best_value.unwrap() <= alpha.unwrap() {
-                    //println!("Returning because child is lower than alpha");
                     return (best_value.unwrap(), best_move);
                 }
 
@@ -252,10 +244,8 @@ impl Board {
     }
 
     fn move_enemy(&mut self) {
-        let (value, coords) = self.move_enemy_helper(false, 0, None, None);
+        let (_, coords) = self.move_enemy_helper(false, 0, None, None);
         let unwrapped_coords = coords.unwrap();
-
-        println!("Best value: {:?}", (value, coords));
         self.set_enemy(unwrapped_coords.0, unwrapped_coords.1);
     }
 }
