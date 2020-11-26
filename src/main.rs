@@ -1,3 +1,4 @@
+use std::fmt;
 use std::io::stdin;
 
 #[derive(Debug, Clone, Eq, PartialEq, Copy)]
@@ -9,6 +10,32 @@ enum State {
 #[derive(Debug, Clone)]
 struct Board {
     data: Vec<Vec<Option<State>>>,
+}
+
+impl fmt::Display for Board {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "-----------\n")?;
+
+        for i in 0..Board::BOARD_SIZE {
+            for j in 0..Board::BOARD_SIZE {
+                let val = &self.data[i][j];
+
+                if let Some(v) = val {
+                    if *v == State::Player {
+                        write!(f, "|X| ")?;
+                    } else {
+                        write!(f, "|O| ")?;
+                    }
+                } else {
+                    write!(f, "| | ")?;
+                }
+            }
+
+            write!(f, "\n-----------\n")?;
+        }
+
+        Ok(())
+    }
 }
 
 impl Board {
@@ -91,7 +118,23 @@ impl Board {
         true
     }
 
+    fn is_full(&self) -> bool {
+        for i in 0..Board::BOARD_SIZE {
+            for j in 0..Board::BOARD_SIZE {
+                if self.data[i][j].is_none() {
+                    return false;
+                }
+            }
+        }
+
+        true
+    }
+
     fn get_value(&self) -> i32 {
+        if self.is_full() {
+            return 2;
+        }
+
         for i in 0..Board::BOARD_SIZE {
             if self.check_row_same(i, State::Player) {
                 return 1;
@@ -140,7 +183,7 @@ impl Board {
         let value = self.get_value();
 
         if value != 0 || children.len() == 0 {
-            if value == 0 {
+            if value == 2 {
                 return (0, None);
             }
 
@@ -221,7 +264,21 @@ fn main() {
     let mut buf = String::new();
     let mut board = Board::new();
 
+    println!("Who is first? (0 - player, 1 - AI)");
+    buf.clear();
+    stdin()
+        .read_line(&mut buf)
+        .expect("Couldn't read from input");
+
+    let first_player_arg: u8 = buf.trim().parse().expect("Couldn't parse input as number");
+
+    if first_player_arg == 1 {
+        board.move_enemy();
+    }
+
     loop {
+        println!("{}", board);
+
         buf.clear();
         stdin()
             .read_line(&mut buf)
@@ -239,8 +296,33 @@ fn main() {
         }
 
         board.set_player(coords[0], coords[1]);
+
+        // Check if player won or there is a tie.
+        let value = board.get_value();
+
+        if value == 1 {
+            println!("You win!");
+            println!("{}", board);
+            break;
+        } else if value == 2 {
+            println!("Tie!");
+            println!("{}", board);
+            break;
+        }
+
         board.move_enemy();
 
-        println!("Board: {:?}", board);
+        // Check if AI won or there is a tie.
+        let value = board.get_value();
+
+        if value == -1 {
+            println!("AI wins!");
+            println!("{}", board);
+            break;
+        } else if value == 2 {
+            println!("Tie!");
+            println!("{}", board);
+            break;
+        }
     }
 }
