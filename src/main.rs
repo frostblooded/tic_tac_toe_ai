@@ -129,12 +129,17 @@ impl Board {
         0
     }
 
-    fn move_enemy_helper(&self, maximize: bool, depth: usize) -> (i32, Option<(usize, usize)>) {
+    fn move_enemy_helper(
+        &self,
+        maximize: bool,
+        depth: usize,
+        mut alpha: Option<i32>,
+        mut beta: Option<i32>,
+    ) -> (i32, Option<(usize, usize)>) {
         let children = self.generate_children(maximize);
+        let value = self.get_value();
 
-        if children.len() == 0 {
-            let value = self.get_value();
-
+        if value != 0 || children.len() == 0 {
             if value == 0 {
                 return (0, None);
             }
@@ -145,6 +150,7 @@ impl Board {
                 -(Board::MAX_SOLUTION_DEPTH as i32 - depth as i32)
             };
 
+            //println!("Returning value {}", used_value);
             return (used_value, None);
         }
 
@@ -152,7 +158,12 @@ impl Board {
         let mut best_move = None;
 
         for (child_board, x, y) in children {
-            let (value, _) = child_board.move_enemy_helper(!maximize, depth + 1);
+            //println!(
+            //"Depth {}, alpha {:?}, beta {:?}: Entering {:?} after placement of ({}, {})",
+            //depth, alpha, beta, child_board, x, y
+            //);
+
+            let (value, _) = child_board.move_enemy_helper(!maximize, depth + 1, alpha, beta);
 
             if best_value.is_none() {
                 best_value = Some(value);
@@ -168,13 +179,37 @@ impl Board {
                     best_move = Some((x, y));
                 }
             }
+
+            if maximize {
+                if beta.is_some() && best_value.unwrap() >= beta.unwrap() {
+                    //println!("Returning because child is higher than beta");
+                    return (best_value.unwrap(), best_move);
+                }
+
+                if alpha.is_some() {
+                    alpha = Some(alpha.unwrap().max(best_value.unwrap()));
+                } else {
+                    alpha = best_value;
+                }
+            } else {
+                if alpha.is_some() && best_value.unwrap() <= alpha.unwrap() {
+                    //println!("Returning because child is lower than alpha");
+                    return (best_value.unwrap(), best_move);
+                }
+
+                if beta.is_some() {
+                    beta = Some(beta.unwrap().min(best_value.unwrap()));
+                } else {
+                    beta = best_value;
+                }
+            }
         }
 
         (best_value.unwrap(), best_move)
     }
 
     fn move_enemy(&mut self) {
-        let (value, coords) = self.move_enemy_helper(false, 0);
+        let (value, coords) = self.move_enemy_helper(false, 0, None, None);
         let unwrapped_coords = coords.unwrap();
 
         println!("Best value: {:?}", (value, coords));
