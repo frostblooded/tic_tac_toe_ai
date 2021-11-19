@@ -14,7 +14,7 @@ struct Board {
 
 impl fmt::Display for Board {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "-----------\n")?;
+        writeln!(f, "-----------")?;
 
         for i in 0..Board::BOARD_SIZE {
             for j in 0..Board::BOARD_SIZE {
@@ -182,7 +182,7 @@ impl Board {
         let children = self.generate_children(maximize);
         let value = self.get_value();
 
-        if value != 0 || children.len() == 0 {
+        if value != 0 || children.is_empty() {
             if value == 2 {
                 return (0, None);
             }
@@ -210,11 +210,9 @@ impl Board {
                     best_value = Some(value);
                     best_move = Some((x, y));
                 }
-            } else {
-                if value < best_value.unwrap() {
-                    best_value = Some(value);
-                    best_move = Some((x, y));
-                }
+            } else if value < best_value.unwrap() {
+                best_value = Some(value);
+                best_move = Some((x, y));
             }
 
             if maximize {
